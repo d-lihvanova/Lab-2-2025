@@ -52,13 +52,26 @@ public class TabulatedFunction {
             return Double.NaN;
         }
         
+        // машинная точность для сравнения чисел с плавающей точкой
+        final double EPSILON = 1e-10;
+        
         // ищем интервал, в который попадает точка x
         for (int i = 0; i < pointsCount - 1; i++) {
             double x1 = points[i].getX();  // начало интервала
             double x2 = points[i + 1].getX();  // конец интервала
             
+            // проверяем, совпадает ли x с x1
+            if (Math.abs(x - x1) < EPSILON) {
+                return points[i].getY(); // x точно равен x1
+            }
+            
+            // проверяем, совпадает ли x с x2
+            if (Math.abs(x - x2) < EPSILON) {
+                return points[i + 1].getY(); // x точно равен x2
+            }
+            
             // если x находится между x1 и x2
-            if (x >= x1 && x <= x2) {
+            if (x > x1 && x < x2) {
                 // берем значения функции на концах интервала
                 double y1 = points[i].getY();
                 double y2 = points[i + 1].getY();
@@ -67,6 +80,7 @@ public class TabulatedFunction {
                 return y1 + (y2 - y1) * (x - x1) / (x2 - x1);
             }
         }
+        
         return Double.NaN;
     }
     
@@ -90,6 +104,7 @@ public class TabulatedFunction {
             return; 
         }
         
+        // проверяем, что новая координата X не нарушает порядок точек
         if (index > 0 && point.getX() <= points[index - 1].getX()) {
             return; // точка должна быть правее предыдущей
         }
@@ -133,11 +148,11 @@ public class TabulatedFunction {
     public void deletePoint(int index) {
         // нельзя удалить точку, если останется меньше 2 точек
         if (pointsCount <= 2) {
-            return; 
+            return; // минимальное количество точек для функции
         }
         
         if (index < 0 || index >= pointsCount) {
-            return; // некорректный индекс
+            return; 
         }
         
         // сдвигаем точки после удаляемой влево
@@ -152,6 +167,18 @@ public class TabulatedFunction {
     
     // добавляет новую точку в функцию
     public void addPoint(FunctionPoint point) {
+        // машинная точность для сравнения чисел с плавающей точкой
+        final double EPSILON = 1e-10;
+        
+        // проверяем, нет ли уже точки с таким X
+        for (int i = 0; i < pointsCount; i++) {
+            if (Math.abs(points[i].getX() - point.getX()) < EPSILON) {
+                // Точка с таким X уже существует - обновляем Y
+                points[i].setY(point.getY());
+                return;
+            }
+        }
+        
         // если массив заполнен - увеличиваем его
         if (pointsCount == points.length) {
             // создаем новый массив большего размера
@@ -167,11 +194,6 @@ public class TabulatedFunction {
         int insertIndex = 0;
         while (insertIndex < pointsCount && points[insertIndex].getX() < point.getX()) {
             insertIndex++;
-        }
-        
-        // если точка с таким X уже существует - не добавляем
-        if (insertIndex < pointsCount && Math.abs(points[insertIndex].getX() - point.getX()) < 1e-10) {
-            return;
         }
         
         // сдвигаем точки вправо, чтобы освободить место
